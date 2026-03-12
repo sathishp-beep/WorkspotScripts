@@ -8,8 +8,13 @@ $form.Text = "Workspot Client Cleanup Tool"
 $form.Size = New-Object System.Drawing.Size(520, 430)
 $form.StartPosition = "CenterScreen"
 $form.Font = New-Object System.Drawing.Font("Arial", 10)
-$form.Icon = New-Object System.Drawing.Icon("https://raw.githubusercontent.com/sathishp-beep/WorkspotScripts/refs/heads/main/workspot.ico")
-
+############################################################## WS Logo ###############################
+$iconUrl = "https://raw.githubusercontent.com/sathishp-beep/WorkspotScripts/refs/heads/main/workspot.ico"
+$webClient = New-Object System.Net.WebClient
+$iconBytes = $webClient.DownloadData($iconUrl)
+$memoryStream = New-Object System.IO.MemoryStream(,$iconBytes)
+$form.Icon = New-Object System.Drawing.Icon($memoryStream)
+#####################################################################################################
 # Title
 $label = New-Object System.Windows.Forms.Label
 $label.Text = "Workspot Client Uninstall / Reinstall Tool"
@@ -179,3 +184,4 @@ $buttonInstall.Add_Click({
 
 
 $form.ShowDialog() | Out-Null
+
