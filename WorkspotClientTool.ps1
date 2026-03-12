@@ -1,4 +1,4 @@
-# Workspot Client Uninstall / Reinstall Tool (This has made up from v5 in local repo)
+# Workspot Client Uninstall / Reinstall Tool
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
@@ -201,6 +201,40 @@ if($guidMatch.Success){
     -Wait
 
     Update-Status "✓ MSI uninstall completed."
+
+    #################################################################
+
+    # STEP 2 Remove AppData
+        Update-Status "`n[Step 2] Removing AppData..."
+
+        $path = "$env:LOCALAPPDATA\Workspot"
+
+        if (Test-Path $path) {
+            Remove-Item $path -Recurse -Force
+            Update-Status "✓ Removed $path"
+        }
+        else {
+            Update-Status "⚠ AppData folder not found"
+        }
+
+        # STEP 3 Registry cleanup
+        Update-Status "`n[Step 3] Removing registry..."
+
+        $reg = "HKCU:\Software\Workspot"
+
+        if (Test-Path $reg) {
+            Remove-Item $reg -Recurse -Force
+            Update-Status "✓ Registry removed"
+        }
+        else {
+            Update-Status "⚠ Registry key not found"
+        }
+
+        Update-Status "`n================================"
+        Update-Status "Cleanup completed."
+
+        ##########################################################################
+
 
 }
 
