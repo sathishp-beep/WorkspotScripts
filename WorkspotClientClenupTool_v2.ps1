@@ -9,11 +9,10 @@ $form.Size = New-Object System.Drawing.Size(520, 430)
 $form.StartPosition = "CenterScreen"
 $form.Font = New-Object System.Drawing.Font("Arial", 10)
 ############################################################## WS Logo ###############################
-$iconUrl = "https://raw.githubusercontent.com/sathishp-beep/WorkspotScripts/refs/heads/main/workspot.ico"
-$webClient = New-Object System.Net.WebClient
-$iconBytes = $webClient.DownloadData($iconUrl)
-$memoryStream = New-Object System.IO.MemoryStream(,$iconBytes)
-$form.Icon = New-Object System.Drawing.Icon($memoryStream)
+$iconUrl = "https://raw.githubusercontent.com/sathishp-beep/WorkspotScripts/main/workspot.ico"
+$response = Invoke-WebRequest $iconUrl -UseBasicParsing
+$stream = New-Object System.IO.MemoryStream($response.Content)
+$form.Icon = New-Object System.Drawing.Icon($stream)
 #####################################################################################################
 # Title
 $label = New-Object System.Windows.Forms.Label
@@ -184,4 +183,5 @@ $buttonInstall.Add_Click({
 
 
 $form.ShowDialog() | Out-Null
+
 
