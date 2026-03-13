@@ -1,5 +1,3 @@
-# Workspot Client Uninstall / Reinstall Tool
-
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 [System.Windows.Forms.Application]::EnableVisualStyles()
@@ -8,11 +6,15 @@ Add-Type -AssemblyName System.Drawing
 # FORM
 ############################################################
 
-$form = New-Object System.Windows.Forms.Form
-$form.Text = "Workspot Client Cleanup Tool"
-$form.Size = New-Object System.Drawing.Size(520,520)
+$form = New-Object Windows.Forms.Form
+$form.Text = "Workspot Client Support Tool"
+$form.Size = New-Object Drawing.Size(650,640)
 $form.StartPosition = "CenterScreen"
-$form.Font = New-Object System.Drawing.Font("Segoe UI",10)
+$form.Font = New-Object Drawing.Font("Segoe UI",10)
+
+# Optional but recommended for support tools
+$form.FormBorderStyle = "FixedSingle"
+$form.MaximizeBox = $false
 
 ############################################################
 # LOAD ICON
@@ -26,117 +28,174 @@ $ms=New-Object IO.MemoryStream(,$bytes)
 $form.Icon=[Drawing.Icon]::FromHandle(([Drawing.Bitmap]::FromStream($ms)).GetHicon())
 }catch{}
 
+
 ############################################################
 # HEADER
 ############################################################
 
-$header=New-Object Windows.Forms.Panel
-$header.Size=New-Object Drawing.Size(520,70)
-$header.BackColor=[Drawing.Color]::LightSteelBlue
+$header = New-Object Windows.Forms.Panel
+$header.Size = New-Object Drawing.Size(650,70)
+$header.BackColor = [Drawing.Color]::SteelBlue
 $form.Controls.Add($header)
 
-$title=New-Object Windows.Forms.Label
-$title.Text="Workspot Client Uninstall / Reinstall Tool"
-$title.Font=New-Object Drawing.Font("Segoe UI",14,[Drawing.FontStyle]::Bold)
-$title.ForeColor=[Drawing.Color]::MidnightBlue
-$title.AutoSize=$true
-$title.Location=New-Object Drawing.Point(60,22)
+$title = New-Object Windows.Forms.Label
+$title.Text = "Workspot Client Support Tool"
+$title.Font = New-Object Drawing.Font("Segoe UI",16,[Drawing.FontStyle]::Bold)
+$title.ForeColor = [Drawing.Color]::White
+$title.Location = New-Object Drawing.Point(20,15)
+$title.AutoSize = $true
+
 $header.Controls.Add($title)
-
-# Logo
-try{
-$logoUrl="https://raw.githubusercontent.com/sathishp-beep/WorkspotScripts/main/workspot.png"
-$wc=New-Object Net.WebClient
-$bytes=$wc.DownloadData($logoUrl)
-$stream=New-Object IO.MemoryStream(,$bytes)
-
-$logo=New-Object Windows.Forms.PictureBox
-$logo.Size=New-Object Drawing.Size(32,32)
-$logo.Location=New-Object Drawing.Point(15,18)
-$logo.SizeMode="StretchImage"
-$logo.Image=[Drawing.Image]::FromStream($stream)
-$header.Controls.Add($logo)
-}catch{}
 
 ############################################################
 # STATUS BOX
 ############################################################
 
-$statusBox=New-Object Windows.Forms.TextBox
-$statusBox.Multiline=$true
-$statusBox.ReadOnly=$true
-$statusBox.ScrollBars="Vertical"
-$statusBox.Size=New-Object Drawing.Size(460,220)
-$statusBox.Location=New-Object Drawing.Point(20,80)
+$statusBox = New-Object Windows.Forms.TextBox
+$statusBox.Multiline = $true
+$statusBox.ReadOnly = $true
+$statusBox.ScrollBars = "Vertical"
+$statusBox.Size = New-Object Drawing.Size(600,230)
+$statusBox.Location = New-Object Drawing.Point(20,90)
+
 $form.Controls.Add($statusBox)
 
 function Update-Status($msg){
+
 $statusBox.AppendText("$msg`r`n")
-$statusBox.SelectionStart=$statusBox.Text.Length
+$statusBox.SelectionStart = $statusBox.Text.Length
 $statusBox.ScrollToCaret()
+
 [Windows.Forms.Application]::DoEvents()
+
 }
 
 ############################################################
 # PROGRESS BAR
 ############################################################
 
-$progressBar=New-Object Windows.Forms.ProgressBar
-$progressBar.Size=New-Object Drawing.Size(460,20)
-$progressBar.Location=New-Object Drawing.Point(20,310)
+$progressBar = New-Object Windows.Forms.ProgressBar
+$progressBar.Size = New-Object Drawing.Size(600,18)
+$progressBar.Location = New-Object Drawing.Point(20,330)
+
 $form.Controls.Add($progressBar)
 
 ############################################################
-# URL INPUT
+# URL FIELD
 ############################################################
-<#
 
-$urlLabel = New-Object System.Windows.Forms.Label
+$urlLabel = New-Object Windows.Forms.Label
 $urlLabel.Text = "*Workspot Client Download Link for Reinstall:"
-$urlLabel.Location = New-Object System.Drawing.Point(20,335)
-$urlLabel.Font = New-Object System.Drawing.Font("Segoe UI",10,[System.Drawing.FontStyle]::Bold)
-$urlLabel.AutoSize = $true
-$form.Controls.Add($urlLabel)
-#>
-
-$urlLabel = New-Object System.Windows.Forms.Label
-$urlLabel.Text = "*Provide Workspot Client Download Link for Reinstallation:"
-$urlLabel.Location = New-Object System.Drawing.Point(20,335)
-$urlLabel.Font = New-Object System.Drawing.Font("Segoe UI",10,[System.Drawing.FontStyle]::Bold)
-$urlLabel.ForeColor = [System.Drawing.Color]::Red
+$urlLabel.ForeColor = [Drawing.Color]::DarkRed
+$urlLabel.Location = New-Object Drawing.Point(20,360)
 $urlLabel.AutoSize = $true
 $form.Controls.Add($urlLabel)
 
-$urlTextbox=New-Object Windows.Forms.TextBox
-$urlTextbox.Size=New-Object Drawing.Size(460,25)
-$urlTextbox.Location=New-Object Drawing.Point(20,360)
+$urlTextbox = New-Object Windows.Forms.TextBox
+$urlTextbox.Size = New-Object Drawing.Size(600,25)
+$urlTextbox.Location = New-Object Drawing.Point(20,385)
+
 $form.Controls.Add($urlTextbox)
+
+############################################################
+#CONTROL & GATEWAY URL FIELD
+############################################################
+
+$gwLabel = New-Object System.Windows.Forms.Label
+$gwLabel.Text = " Control / Gateway URLs:"
+$gwLabel.Font = New-Object System.Drawing.Font("Segoe UI",10,[System.Drawing.FontStyle]::Bold)
+$gwLabel.Location = New-Object System.Drawing.Point(20,420)
+$gwLabel.AutoSize = $true
+$form.Controls.Add($gwLabel)
+
+# Control URL
+$portalTextbox = New-Object System.Windows.Forms.TextBox
+$portalTextbox.Size = New-Object System.Drawing.Size(280,25)
+$portalTextbox.Location = New-Object System.Drawing.Point(20,445)
+$portalTextbox.Text = "control.workspot.com"
+$form.Controls.Add($portalTextbox)
+
+# Gateway URL
+$gatewayTextbox = New-Object System.Windows.Forms.TextBox
+$gatewayTextbox.Size = New-Object System.Drawing.Size(280,25)
+$gatewayTextbox.Location = New-Object System.Drawing.Point(320,445)
+$gatewayTextbox.Text = "<PROVIDE GATEWAY URL HERE>"
+$form.Controls.Add($gatewayTextbox)
+
+############################################################
+# BUTTON CREATION FUNCTION
+############################################################
+
+function New-ToolButton($text,$x,$y){
+
+$btn = New-Object Windows.Forms.Button
+$btn.Text = $text
+$btn.Size = New-Object Drawing.Size(180,40)
+$btn.Location = New-Object Drawing.Point($x,$y)
+$btn.Font = New-Object Drawing.Font("Segoe UI",10,[Drawing.FontStyle]::Bold)
+
+$form.Controls.Add($btn)
+
+return $btn
+}
 
 ############################################################
 # BUTTONS
 ############################################################
 
-$buttonUninstall=New-Object Windows.Forms.Button
-$buttonUninstall.Text="Uninstall Workspot Client"
-$buttonUninstall.Size=New-Object Drawing.Size(200,40)
-$buttonUninstall.Location=New-Object Drawing.Point(60,410)
-$buttonUninstall.BackColor=[Drawing.Color]::LightCoral
-$buttonUninstall.Font = New-Object System.Drawing.Font("Segoe UI",10,[System.Drawing.FontStyle]::Bold)
-$form.Controls.Add($buttonUninstall)
+$btnDetect = New-ToolButton "Detect Client" 20 430
+$btnUninstall = New-ToolButton "Uninstall" 220 430
+$btnCleanup = New-ToolButton "Deep Cleanup" 420 430
 
-$buttonInstall=New-Object Windows.Forms.Button
-$buttonInstall.Text="Reinstall Workspot Client"
-$buttonInstall.Size=New-Object Drawing.Size(200,40)
-$buttonInstall.Location=New-Object Drawing.Point(260,410)
-$buttonInstall.BackColor=[Drawing.Color]::LightBlue
-$buttonInstall.Font = New-Object System.Drawing.Font("Segoe UI",10,[System.Drawing.FontStyle]::Bold)
-$form.Controls.Add($buttonInstall)
+$btnReinstall = New-ToolButton "Clean + Reinstall" 20 480
+$btnLogs = New-ToolButton "Collect Logs" 220 480
+$btnTest = New-ToolButton "Test Workspot Connectivity" 420 480
+
+
+$btnDetect.Location = New-Object Drawing.Point(20,490)
+$btnUninstall.Location = New-Object Drawing.Point(220,490)
+$btnCleanup.Location = New-Object Drawing.Point(420,490)
+
+$btnReinstall.Location = New-Object Drawing.Point(20,540)
+$btnLogs.Location = New-Object Drawing.Point(220,540)
+$btnTest.Location = New-Object Drawing.Point(420,540)
+############################################################
+# DETECT CLIENT
+############################################################
+
+$btnDetect.Add_Click({
+
+Update-Status "`nDetecting Workspot Client..."
+
+$paths = @(
+"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+"HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+)
+
+$app = Get-ItemProperty $paths -ErrorAction SilentlyContinue |
+Where-Object { $_.DisplayName -eq "Workspot Client" } |
+Select-Object -First 1
+
+if ($app) {
+
+    Update-Status "Client Found:"
+    Update-Status "Name: $($app.DisplayName)"
+    Update-Status "Version: $($app.DisplayVersion)"
+
+}
+else {
+
+    Update-Status "Workspot Client not installed"
+
+}
+
+})
 
 ############################################################
 # UNINSTALL
 ############################################################
 
-$buttonUninstall.Add_Click({
+$btnUninstall.Add_Click({
 
 Update-Status "`nSearching for Workspot installation..."
 
@@ -241,11 +300,99 @@ if($guidMatch.Success){
 Update-Status "Uninstall command completed."
 
 })
+
+############################################################
+# CLEANUP
+############################################################
+
+$btnCleanup.Add_Click({
+
+Update-Status "`nRunning deep cleanup..."
+
+$paths=@(
+"$env:ProgramFiles\Workspot",
+"$env:ProgramFiles(x86)\Workspot",
+"$env:ProgramData\Workspot",
+"$env:LOCALAPPDATA\Workspot"
+)
+
+foreach($p in $paths){
+
+if(Test-Path $p){
+
+Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue
+Update-Status "Removed $p"
+
+}
+
+}
+
+Update-Status "Cleanup completed"
+
+})
+
+############################################################
+# COLLECT LOGS
+############################################################
+
+$btnLogs.Add_Click({
+
+Update-Status "`nCollecting logs..."
+
+$dest="C:\Temp\WorkspotLogs.zip"
+
+$logPaths=@(
+"$env:LOCALAPPDATA\Workspot\Client\log"
+)
+
+Compress-Archive $logPaths $dest -Force
+
+Update-Status "Logs exported to $dest"
+
+})
+
+############################################################
+# TEST GATEWAY & Workspot URLs
+############################################################
+
+$btnTest.Add_Click({
+
+Update-Status "`nTesting connectivity..."
+
+$servers = @(
+    $portalTextbox.Text.Trim(),
+    $gatewayTextbox.Text.Trim()
+)
+
+foreach($s in $servers){
+
+    # Ignore empty fields
+    if([string]::IsNullOrWhiteSpace($s)){
+        continue
+    }
+
+    $result = Test-NetConnection $s -Port 443 -WarningAction SilentlyContinue
+
+    if($result.TcpTestSucceeded){
+
+        Update-Status "$s reachable on port 443"
+
+    }
+    else{
+
+        Update-Status "$s NOT reachable"
+
+    }
+
+}
+
+})
+
 ############################################################
 # DOWNLOAD + INSTALL
 ############################################################
 
-$buttonInstall.Add_Click({
+$btnReinstall.Add_Click({
 
 $url=$urlTextbox.Text.Trim()
 
