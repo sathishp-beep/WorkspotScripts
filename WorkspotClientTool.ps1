@@ -35,7 +35,7 @@ $form.Icon=[Drawing.Icon]::FromHandle(([Drawing.Bitmap]::FromStream($ms)).GetHic
 
 $header = New-Object Windows.Forms.Panel
 $header.Size = New-Object Drawing.Size(650,70)
-$header.BackColor = [Drawing.Color]::SteelBlue
+$header.BackColor = [Drawing.Color]::DarkBlue
 $form.Controls.Add($header)
 
 $title = New-Object Windows.Forms.Label
