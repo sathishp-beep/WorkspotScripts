@@ -404,9 +404,7 @@ if(!$url){
 Update-Status "Please paste Workspot MSI URL in the Client Download Link field below the status box."
 return
 }
-
-$buttonInstall.Enabled=$false
-
+$btnReinstall.Enabled=$true
 New-Item C:\Temp -ItemType Directory -Force | Out-Null
 $dest="C:\Temp\WorkspotClient.msi"
 
@@ -466,7 +464,7 @@ $progressBar.Value=100
 
 Update-Status "✓ Workspot Client installed successfully"
 
-$buttonInstall.Enabled=$true
+$btnReinstall.Enabled=$true
 
 })
 
