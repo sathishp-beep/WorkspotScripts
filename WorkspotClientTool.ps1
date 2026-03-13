@@ -103,7 +103,7 @@ $form.Controls.Add($urlTextbox)
 ############################################################
 
 $gwLabel = New-Object System.Windows.Forms.Label
-$gwLabel.Text = " Control / Gateway URLs:"
+$gwLabel.Text = " Connection Check to Workspot Control / Gateway:"
 $gwLabel.Font = New-Object System.Drawing.Font("Segoe UI",10,[System.Drawing.FontStyle]::Bold)
 $gwLabel.Location = New-Object System.Drawing.Point(20,420)
 $gwLabel.AutoSize = $true
