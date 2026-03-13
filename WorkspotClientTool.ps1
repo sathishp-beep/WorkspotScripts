@@ -85,7 +85,8 @@ $form.Controls.Add($progressBar)
 ############################################################
 
 $urlLabel = New-Object Windows.Forms.Label
-$urlLabel.Text = "*Workspot Client Download Link for Reinstall:"
+$urlLabel.Text = "*Workspot Client Download Link for Install / Reinstall:"
+$urlLabel.Font = New-Object System.Drawing.Font("Segoe UI",10,[System.Drawing.FontStyle]::Bold)
 $urlLabel.ForeColor = [Drawing.Color]::DarkRed
 $urlLabel.Location = New-Object Drawing.Point(20,360)
 $urlLabel.AutoSize = $true
@@ -147,7 +148,7 @@ $btnDetect = New-ToolButton "Detect Client" 20 430
 $btnUninstall = New-ToolButton "Uninstall" 220 430
 $btnCleanup = New-ToolButton "Deep Cleanup" 420 430
 
-$btnReinstall = New-ToolButton "Clean + Reinstall" 20 480
+$btnReinstall = New-ToolButton "Install / Reinstall" 20 480
 $btnLogs = New-ToolButton "Collect Logs" 220 480
 $btnTest = New-ToolButton "Test Workspot Connectivity" 420 480
 
@@ -313,7 +314,8 @@ $paths=@(
 "$env:ProgramFiles\Workspot",
 "$env:ProgramFiles(x86)\Workspot",
 "$env:ProgramData\Workspot",
-"$env:LOCALAPPDATA\Workspot"
+"$env:LOCALAPPDATA\Workspot",
+"$env:LOCALAPPDATA\Programs\Workspot"
 )
 
 foreach($p in $paths){
@@ -324,7 +326,9 @@ Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue
 Update-Status "Removed $p"
 
 }
-
+else {
+    Update-Status "Check the Path not found: $p or You may not have permissions to delete."
+}
 }
 
 Update-Status "Cleanup completed"
@@ -397,7 +401,7 @@ $btnReinstall.Add_Click({
 $url=$urlTextbox.Text.Trim()
 
 if(!$url){
-Update-Status "Please paste Workspot MSI URL"
+Update-Status "Please paste Workspot MSI URL in the Client Download Link field below the status box."
 return
 }
 
