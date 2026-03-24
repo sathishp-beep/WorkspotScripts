@@ -198,6 +198,7 @@ $form.Controls.Add($portalTextbox)
 $gatewayTextbox = New-Object Windows.Forms.TextBox
 $gatewayTextbox.Size = New-Object Drawing.Size(300, 25)
 $gatewayTextbox.Location = New-Object Drawing.Point(370, $y)
+$gatewayTextbox.Text = "<PROVIDE THE GATEWAY DAAS URI HERE>"
 $form.Controls.Add($gatewayTextbox)
 
 $y += 50
