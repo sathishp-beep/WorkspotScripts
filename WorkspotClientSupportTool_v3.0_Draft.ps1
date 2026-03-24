@@ -243,7 +243,7 @@ $row2Y = Get-NextY $btnDetect 10
 
 $btnInstall = New-Button "Install Workspot Client"  20  $row2Y
 $btnLogs = New-Button "Collect WS Client Logs"      240 $row2Y
-$btnTest = New-Button "Control Connectivity Test" 460 $row2Y
+$btnTest = New-Button "Workspot Connectivity Test" 460 $row2Y
 
 ############################################################
 # ROW 3 (FABTECH)
