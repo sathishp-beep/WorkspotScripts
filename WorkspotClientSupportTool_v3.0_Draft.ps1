@@ -119,7 +119,7 @@ $fClientTextbox.Size = New-Object Drawing.Size(650, 25)
 $fClientTextbox.Location = New-Object Drawing.Point(20, $y)
 #$fClientTextbox.PlaceholderText = "FabTech Client Download Link"
 
-$fClientTextbox.Text = "FabTech Client Download URL"
+$fClientTextbox.Text = "FabTech Client Download Link"
 $fClientTextbox.ForeColor = [Drawing.Color]::Gray
 
 $fClientTextbox.Add_GotFocus({
