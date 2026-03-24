@@ -117,7 +117,25 @@ $y += 30
 $fClientTextbox = New-Object Windows.Forms.TextBox
 $fClientTextbox.Size = New-Object Drawing.Size(650, 25)
 $fClientTextbox.Location = New-Object Drawing.Point(20, $y)
-$fClientTextbox.PlaceholderText = "FabTech Client Download Link"
+#$fClientTextbox.PlaceholderText = "FabTech Client Download Link"
+
+$fClientTextbox.Text = "FabTech Client Download URL"
+$fClientTextbox.ForeColor = [Drawing.Color]::Gray
+
+$fClientTextbox.Add_GotFocus({
+    if ($fClientTextbox.Text -eq "FabTech Client Download URL") {
+        $fClientTextbox.Text = ""
+        $fClientTextbox.ForeColor = [Drawing.Color]::Black
+    }
+})
+
+$fClientTextbox.Add_LostFocus({
+    if ([string]::IsNullOrWhiteSpace($fClientTextbox.Text)) {
+        $fClientTextbox.Text = "FabTech Client Download URL"
+        $fClientTextbox.ForeColor = [Drawing.Color]::Gray
+    }
+})
+
 $form.Controls.Add($fClientTextbox)
 
 $y += 35
