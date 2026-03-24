@@ -539,7 +539,7 @@ $btnTest.Add_Click({
 
 $btnLogs.Add_Click({
 
-        $zip = "C:\Temp\WorkspotLogs.zip"
+        $zip = "C:\Temp\WorkspotClientLogs.zip"
 
         Compress-Archive "$env:LOCALAPPDATA\Workspot\Client\log" $zip -Force
 
