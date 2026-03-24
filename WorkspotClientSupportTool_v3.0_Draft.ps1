@@ -123,7 +123,7 @@ $fClientTextbox.Text = "FabTech Client Download URL"
 $fClientTextbox.ForeColor = [Drawing.Color]::Gray
 
 $fClientTextbox.Add_GotFocus({
-    if ($fClientTextbox.Text -eq "FabTech Client Download URL") {
+    if ($fClientTextbox.Text -eq "FabTech Client Download Link") {
         $fClientTextbox.Text = ""
         $fClientTextbox.ForeColor = [Drawing.Color]::Black
     }
@@ -131,7 +131,7 @@ $fClientTextbox.Add_GotFocus({
 
 $fClientTextbox.Add_LostFocus({
     if ([string]::IsNullOrWhiteSpace($fClientTextbox.Text)) {
-        $fClientTextbox.Text = "FabTech Client Download URL"
+        $fClientTextbox.Text = "FabTech Client Download Link"
         $fClientTextbox.ForeColor = [Drawing.Color]::Gray
     }
 })
