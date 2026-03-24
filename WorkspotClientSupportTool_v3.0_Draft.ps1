@@ -231,9 +231,9 @@ $baseY = Get-NextY $gatewayTextbox 30
 # ROW 1
 ############################################################
 
-$btnDetect = New-Button "Detect Client"     20  $baseY
+$btnDetect = New-Button "Detect Workspot Client"     20  $baseY
 $btnUninstall = New-Button "Uninstall Workspot Client"         240 $baseY
-$btnCleanup = New-Button "Deep Cleanup"      460 $baseY
+$btnCleanup = New-Button "Client Deep Cleanup"      460 $baseY
 
 ############################################################
 # ROW 2
@@ -242,8 +242,8 @@ $btnCleanup = New-Button "Deep Cleanup"      460 $baseY
 $row2Y = Get-NextY $btnDetect 10
 
 $btnInstall = New-Button "Install Workspot Client"  20  $row2Y
-$btnLogs = New-Button "Collect Logs"      240 $row2Y
-$btnTest = New-Button "Test Connectivity" 460 $row2Y
+$btnLogs = New-Button "Collect WS Client Logs"      240 $row2Y
+$btnTest = New-Button "Control Connectivity Test" 460 $row2Y
 
 ############################################################
 # ROW 3 (FABTECH)
