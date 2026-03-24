@@ -117,25 +117,7 @@ $y += 30
 $fClientTextbox = New-Object Windows.Forms.TextBox
 $fClientTextbox.Size = New-Object Drawing.Size(650, 25)
 $fClientTextbox.Location = New-Object Drawing.Point(20, $y)
-#$fClientTextbox.PlaceholderText = "FabTech Client Download Link"
-
-$fClientTextbox.Text = "FabTech Client Download Link"
-$fClientTextbox.ForeColor = [Drawing.Color]::Gray
-
-$fClientTextbox.Add_GotFocus({
-    if ($fClientTextbox.Text -eq "FabTech Client Download Link") {
-        $fClientTextbox.Text = ""
-        $fClientTextbox.ForeColor = [Drawing.Color]::Black
-    }
-})
-
-$fClientTextbox.Add_LostFocus({
-    if ([string]::IsNullOrWhiteSpace($fClientTextbox.Text)) {
-        $fClientTextbox.Text = "FabTech Client Download Link"
-        $fClientTextbox.ForeColor = [Drawing.Color]::Gray
-    }
-})
-
+$fClientTextbox.PlaceholderText = "FabTech Client Download Link"
 $form.Controls.Add($fClientTextbox)
 
 $y += 35
@@ -144,24 +126,7 @@ $y += 35
 $fServerTextbox = New-Object Windows.Forms.TextBox
 $fServerTextbox.Size = New-Object Drawing.Size(650, 25)
 $fServerTextbox.Location = New-Object Drawing.Point(20, $y)
-#$fServerTextbox.PlaceholderText = "FabTech Server Download Link"
-
-$fServerTextbox.Text = "FabTech Server Download Link"
-$fServerTextbox.ForeColor = [Drawing.Color]::Gray
-
-$fServerTextbox.Add_GotFocus({
-    if ($fServerTextbox.Text -eq "FabTech Server Download Link") {
-        $fServerTextbox.Text = ""
-        $fServerTextbox.ForeColor = [Drawing.Color]::Black
-    }
-})
-
-$fServerTextbox.Add_LostFocus({
-    if ([string]::IsNullOrWhiteSpace($fServerTextbox.Text)) {
-        $fServerTextbox.Text = "FabTech Client Download URL"
-        $fServerTextbox.ForeColor = [Drawing.Color]::Gray
-    }
-})
+$fServerTextbox.PlaceholderText = "FabTech Server Download Link"
 $form.Controls.Add($fServerTextbox)
 
 $y += 40
@@ -170,25 +135,7 @@ $y += 40
 $fLicenseTextbox = New-Object Windows.Forms.TextBox
 $fLicenseTextbox.Size = New-Object Drawing.Size(650, 25)
 $fLicenseTextbox.Location = New-Object Drawing.Point(20, $y)
-#$fLicenseTextbox.PlaceholderText = "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)"
-
-$fLicenseTextbox.Text = "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)"
-$fLicenseTextbox.ForeColor = [Drawing.Color]::Gray
-
-$fLicenseTextbox.Add_GotFocus({
-    if ($fLicenseTextbox.Text -eq "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)") {
-        $fLicenseTextbox.Text = ""
-        $fLicenseTextbox.ForeColor = [Drawing.Color]::Black
-    }
-})
-
-$fLicenseTextbox.Add_LostFocus({
-    if ([string]::IsNullOrWhiteSpace($fLicenseTextbox.Text)) {
-        $fLicenseTextbox.Text = "FabTech Client Download URL"
-        $fLicenseTextbox.ForeColor = [Drawing.Color]::Gray
-    }
-})
-
+$fLicenseTextbox.PlaceholderText = "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)"
 $form.Controls.Add($fLicenseTextbox)
 
 $y += 45
@@ -240,7 +187,7 @@ $baseY = Get-NextY $gatewayTextbox 30
 ############################################################
 
 $btnDetect = New-Button "Detect Client"     20  $baseY
-$btnUninstall = New-Button "Uninstall"         240 $baseY
+$btnUninstall = New-Button "Uninstall Workspot Client"         240 $baseY
 $btnCleanup = New-Button "Deep Cleanup"      460 $baseY
 
 ############################################################
@@ -249,7 +196,7 @@ $btnCleanup = New-Button "Deep Cleanup"      460 $baseY
 
 $row2Y = Get-NextY $btnDetect 10
 
-$btnInstall = New-Button "Install Workspot"  20  $row2Y
+$btnInstall = New-Button "Install Workspot Client"  20  $row2Y
 $btnLogs = New-Button "Collect Logs"      240 $row2Y
 $btnTest = New-Button "Test Connectivity" 460 $row2Y
 
@@ -259,52 +206,105 @@ $btnTest = New-Button "Test Connectivity" 460 $row2Y
 
 $row3Y = Get-NextY $btnInstall 10
 
-$btnFabClient = New-Button "Install FabTech Client" 120 $row3Y
-$btnFabServer = New-Button "Install FabTech Server" 360 $row3Y
-
-<#
-############################################################
-# BUTTONS (SHIFTED DOWN AUTOMATICALLY)
-############################################################
-
-$btnDetect = New-Button "Detect Client"        20  $y
-$btnUninstall = New-Button "Uninstall Workspot Client"            240 $y
-$btnCleanup = New-Button "Deep Cleanup"         460 $y
-
-$y += 60
-
-$btnInstall = New-Button "Install Workspot Client"     20  $y
-$btnLogs = New-Button "Collect Logs"         240 $y
-$btnTest = New-Button "Test Connectivity"    460 $y
-
-$y += 70
-
-$btnFabClient = New-Button "Install FabTech Client" 120 $y
-$btnFabServer = New-Button "Install FabTech Server" 360 $y
-
-$y += 80
+$btnFabClient = New-Button "Install FabTech Client" 20 $row3Y
+$btnFabServer = New-Button "Install FabTech Server" 240 $row3Y
+$btnDebugLogs = New-Button "Enable Client Debug Logs" 460 $row3Y
 
 ############################################################
-# DOWNLOAD + INSTALL FUNCTION (REUSABLE)
+# DETECT INSTALLED APPLICATION (Workspot Client)
 ############################################################
 
-function Install-MSI($url, $name) {
+$btnDetect.Add_Click({
 
-    if ([string]::IsNullOrWhiteSpace($url)) {
-        Update-Status "❌ URL missing for $name"
-        return
-    }
+        Update-Status "`nDetecting Workspot Client..."
 
-    $dest = "C:\Temp\$name.msi"
-    New-Item C:\Temp -ItemType Directory -Force | Out-Null
+        $paths = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        )
 
-    Update-Status "`nDownloading $name..."
+        $app = Get-ItemProperty $paths -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName -eq "Workspot Client" } |
+        Select-Object -First 1
 
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+        if ($app) {
 
-        Update-Status "Download complete: $dest"
-        Update-Status "Installing $name..."
+            Update-Status "Client Found:"
+            Update-Status "Name: $($app.DisplayName)"
+            Update-Status "Version: $($app.DisplayVersion)"
+
+        }
+        else {
+
+            Update-Status "Workspot Client not installed"
+
+        }
+
+    })
+
+
+############################################################
+# DOWNLOAD + INSTALL (Workspot Client)
+############################################################
+
+$btnInstall.Add_Click({
+
+        $url = $wsTextbox.Text.Trim()
+
+        if (!$url) {
+            Update-Status "Please paste Workspot MSI URL in the Client Download Link field below the status box."
+            return
+        }
+        $btnInstall.Enabled = $true
+        New-Item C:\Temp -ItemType Directory -Force | Out-Null
+        $dest = "C:\Temp\WorkspotClient.msi"
+
+        Update-Status "Starting download..."
+
+        $request = [System.Net.HttpWebRequest]::Create($url)
+        $response = $request.GetResponse()
+        $total = $response.ContentLength
+        $stream = $response.GetResponseStream()
+
+        $file = [IO.File]::Create($dest)
+
+        $buffer = New-Object byte[] 8192
+        $read = 0
+        $totalRead = 0
+        $start = Get-Date
+
+        while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+
+            $file.Write($buffer, 0, $read)
+            $totalRead += $read
+
+            $percent = [math]::Round(($totalRead / $total) * 100)
+
+            $elapsed = (Get-Date) - $start
+            $speed = ($totalRead / 1MB) / $elapsed.TotalSeconds
+            $remain = ($total - $totalRead) / 1MB
+            $eta = $remain / $speed
+
+            $progressBar.Value = $percent
+
+            $status = "Download $percent%  {0:N1}/{1:N1} MB  Speed {2:N2} MB/s  ETA {3:N0}s" -f `
+            ($totalRead / 1MB), ($total / 1MB), $speed, $eta
+
+            $statusBox.Lines[-1] = $status
+            [Windows.Forms.Application]::DoEvents()
+
+        }
+
+        $file.Close()
+        $response.Close()
+
+        Update-Status "Download complete"
+
+        ############################################################
+        # INSTALL
+        ############################################################
+
+        Update-Status "Starting installation..."
 
         $progressBar.Style = "Marquee"
 
@@ -313,156 +313,163 @@ function Install-MSI($url, $name) {
         $progressBar.Style = "Blocks"
         $progressBar.Value = 100
 
-        Update-Status "✅ $name installed successfully"
-    }
-    catch {
-        Update-Status "❌ Failed: $($_.Exception.Message)"
-    }
-}
-#>
+        Update-Status "✓ Workspot Client installed successfully"
 
+        $btnInstall.Enabled = $true
+
+    })
 ############################################################
-# DETECT INSTALLED APPLICATION
+# FABTECH BUTTON EVENTS
 ############################################################
 
-function Get-InstalledApp($name) {
+############################################################
+# GENERIC DOWNLOAD + INSTALL FUNCTION (REUSABLE)
+############################################################
 
-    $paths = @(
-        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
-        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+function Install-MSI {
+    param(
+        [string]$Url,
+        [string]$Name,
+        [string]$ExtraArgs
     )
-
-    return Get-ItemProperty $paths -ErrorAction SilentlyContinue |
-    Where-Object { $_.DisplayName -like "*$name*" } |
-    Select-Object -First 1
-}
-
-############################################################
-# DOWNLOAD + INSTALL (SMART)
-############################################################
-
-function Install-MSI($url, $name) {
-
-    if ([string]::IsNullOrWhiteSpace($url)) {
-        Update-Status "❌ URL missing for $name"
-        return
-    }
-
-    ########################################################
-    # PRE-CHECK (ALREADY INSTALLED)
-    ########################################################
-
-    $existing = Get-InstalledApp $name
-
-    if ($existing) {
-        Update-Status "⚠ $name already installed"
-        Update-Status "Version: $($existing.DisplayVersion)"
-        return
-    }
-
-    ########################################################
-    # DOWNLOAD
-    ########################################################
-
-    $dest = "C:\Temp\$name.msi"
-    $log = "C:\Temp\$name-Install.log"
-
-    New-Item C:\Temp -ItemType Directory -Force | Out-Null
-
-    Update-Status "`nDownloading $name..."
 
     try {
-        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-        Update-Status "Download complete: $dest"
-    }
-    catch {
-        Update-Status "❌ Download failed: $($_.Exception.Message)"
-        return
-    }
-
-    ########################################################
-    # BUILD INSTALL ARGUMENTS
-    ########################################################
-
-    $arguments = @(
-        "/i `"$dest`""
-        "/qn"
-        "/norestart"
-        "/l*v `"$log`""
-    )
-
-    ########################################################
-    # FABTECH SPECIAL LOGIC
-    ########################################################
-
-    if ($name -like "*FabTech*") {
-
-        Update-Status "Applying FabTech configuration..."
-        # Read value from textbox
-        $licenseServer = $fLicenseTextbox.Text.Trim()
-
-        $arguments += @(
-            "LICENSESERVER=$licenseServer"
-            "PORT=33033"
-        )
-
-        # Optional: Server-specific install path
-        if ($name -like "*Server*") {
-            $arguments += 'INSTALLDIR="C:\Program Files\FabTech\Server"'
+        if ([string]::IsNullOrWhiteSpace($Url)) {
+            Update-Status "❌ $Name URL is empty."
+            return
         }
-    }
 
-    ########################################################
-    # INSTALL
-    ########################################################
+        New-Item C:\Temp -ItemType Directory -Force | Out-Null
+        $dest = "C:\Temp\$Name.msi"
+        $log = "C:\Temp\$Name-install.log"
 
-    Update-Status "Installing $name..."
-    $progressBar.Style = "Marquee"
+        Update-Status "`n[$Name] Download started..."
 
-    try {
-        Start-Process "msiexec.exe" `
-            -ArgumentList $arguments `
-            -Wait -NoNewWindow
+        ############################################################
+        # DOWNLOAD WITH PROGRESS
+        ############################################################
+
+        $request = [System.Net.HttpWebRequest]::Create($Url)
+        $response = $request.GetResponse()
+        $total = $response.ContentLength
+        $stream = $response.GetResponseStream()
+
+        $file = [IO.File]::Create($dest)
+
+        $buffer = New-Object byte[] 8192
+        $totalRead = 0
+        $start = Get-Date
+
+        while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+
+            $file.Write($buffer, 0, $read)
+            $totalRead += $read
+
+            if ($total -gt 0) {
+                $percent = [math]::Round(($totalRead / $total) * 100)
+                $progressBar.Value = $percent
+            }
+
+            [Windows.Forms.Application]::DoEvents()
+        }
+
+        $file.Close()
+        $response.Close()
+
+        Update-Status "[$Name] Download complete"
+
+        ############################################################
+        # INSTALL
+        ############################################################
+
+        Update-Status "[$Name] Installing..."
+
+        $progressBar.Style = "Marquee"
+
+        $arguments = "/i `"$dest`" /qn /norestart /l*v `"$log`""
+
+        if ($ExtraArgs) {
+            $arguments += " $ExtraArgs"
+        }
+
+        $process = Start-Process msiexec.exe -ArgumentList $arguments -Wait -PassThru
 
         $progressBar.Style = "Blocks"
-        $progressBar.Value = 100
 
-        ####################################################
-        # POST-INSTALL VALIDATION
-        ####################################################
-
-        Start-Sleep -Seconds 3
-
-        $installed = Get-InstalledApp $name
-
-        if ($installed) {
-            Update-Status "✅ $name installed successfully"
-            Update-Status "Version: $($installed.DisplayVersion)"
+        if ($process.ExitCode -eq 0) {
+            Update-Status "✅ $Name installed successfully"
         }
         else {
-            Update-Status "⚠ Installation completed but not detected"
+            Update-Status "❌ $Name installation failed. ExitCode: $($process.ExitCode)"
             Update-Status "Check log: $log"
         }
+
     }
     catch {
-        Update-Status "❌ Installation failed: $($_.Exception.Message)"
-        Update-Status "Check log: $log"
+        Update-Status "❌ Error installing $Name : $_"
     }
 }
-############################################################
-# BUTTON EVENTS
-############################################################
 
-$btnInstall.Add_Click({
-        Install-MSI $wsTextbox.Text.Trim() "WorkspotClient"
-    })
+############################################################
+# FABTECH CLIENT INSTALL
+############################################################
 
 $btnFabClient.Add_Click({
-        Install-MSI $fClientTextbox.Text.Trim() "FabTechClient"
+
+        $btnFabClient.Enabled = $false
+
+        $url = $fClientTextbox.Text.Trim()
+
+        if (!$url) {
+            Update-Status "❌ Please provide FabTech Client URL"
+            $btnFabClient.Enabled = $true
+            return
+        }
+
+        Install-MSI -Url $url -Name "FabTechClient"
+
+        $btnFabClient.Enabled = $true
     })
 
+############################################################
+# FABTECH SERVER INSTALL (WITH LICENSE LOGIC)
+############################################################
+
 $btnFabServer.Add_Click({
-        Install-MSI $fServerTextbox.Text.Trim() "FabTechServer"
+
+        $btnFabServer.Enabled = $false
+
+        $url = $fServerTextbox.Text.Trim()
+        $license = $fLicenseTextbox.Text.Trim()
+
+        if (!$url) {
+            Update-Status "❌ Please provide FabTech Server URL"
+            $btnFabServer.Enabled = $true
+            return
+        }
+
+        ############################################################
+        # LICENSE SERVER LOGIC
+        ############################################################
+
+        $extraArgs = ""
+
+        if ($license) {
+
+            Update-Status "Applying FabTech License configuration..."
+
+            $extraArgs = @(
+                "LICENSESERVER=$license"
+                "PORT=33033"
+            ) -join " "
+        }
+        else {
+            Update-Status "⚠ No license server provided. Installing without license config."
+        }
+
+        Install-MSI -Url $url -Name "FabTechServer" -ExtraArgs $extraArgs
+
+        $btnFabServer.Enabled = $true
     })
 
 $btnTest.Add_Click({
@@ -632,4 +639,56 @@ $btnUninstall.Add_Click({
 
     })
 
+$btnDebugLogs.Add_Click({
+        function Enable-DebugLogs {
+            # Ensure destination folder exists
+            $script:LogPath = "C:\Temp"
+            # Full .reg file path under the data folder
+            $script:WSDebugLogging = Join-Path $script:LogPath "WS_Advance_logging_v2.reg"
+            if (-not (Test-Path $script:LogPath)) {
+                New-Item -Path $script:LogPath -ItemType Directory -Force | Out-Null
+            }
+
+            $GitHubUrl = "https://raw.githubusercontent.com/sathishp-beep/WS_Advance_logging_v2/main/WS_Advance_logging_v2.reg"
+
+            # Always (re)download to be sure we have a valid .reg file
+            try {
+                Write-Host "Downloading debug logging registry file..." -ForegroundColor Yellow
+                Invoke-WebRequest -Uri $GitHubUrl -OutFile $script:WSDebugLogging -UseBasicParsing -ErrorAction Stop
+                Write-Host "Downloaded to: $script:WSDebugLogging" -ForegroundColor Green
+            }
+            catch {
+                Write-Error "Failed to download .reg file: $($_.Exception.Message)"
+                return
+            }
+
+            if (-not (Test-Path $script:WSDebugLogging)) {
+                Write-Warning "Debug logging file not found after download: $script:WSDebugLogging"
+                return
+            }
+
+            # Import using reg.exe for reliability
+            try {
+                $quotedPath = '"' + $script:WSDebugLogging + '"'
+                Write-Host "Importing registry from: $quotedPath" -ForegroundColor Yellow
+
+                $proc = Start-Process -FilePath "$env:WINDIR\System32\reg.exe" `
+                    -ArgumentList "import $quotedPath" `
+                    -Wait -PassThru -NoNewWindow
+
+                if ($proc.ExitCode -eq 0) {
+                    Write-Host "Debug logging registry imported successfully." -ForegroundColor Green
+                }
+                else {
+                    Write-Error "Registry import failed. Exit code: $($proc.ExitCode)"
+                }
+            }
+            catch {
+                Write-Error "Failed to import .reg file: $($_.Exception.Message)"
+            }
+        }
+
+        Enable-DebugLogs | Out-Null
+        Update-Status "✓ Client debug logging enabled. Check registry for details."
+    })
 $form.ShowDialog()
