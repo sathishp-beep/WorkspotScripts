@@ -146,19 +146,19 @@ $fServerTextbox.Size = New-Object Drawing.Size(650, 25)
 $fServerTextbox.Location = New-Object Drawing.Point(20, $y)
 #$fServerTextbox.PlaceholderText = "FabTech Server Download Link"
 
-$fServerTextbo.Text = "FabTech Server Download Link"
-$fServerTextbo.ForeColor = [Drawing.Color]::Gray
+$fServerTextbox.Text = "FabTech Server Download Link"
+$fServerTextbox.ForeColor = [Drawing.Color]::Gray
 
-$fServerTextbo.Add_GotFocus({
-    if ($fServerTextbo.Text -eq "FabTech Server Download Link") {
-        $fServerTextbo.Text = ""
+$fServerTextbox.Add_GotFocus({
+    if ($fServerTextbox.Text -eq "FabTech Server Download Link") {
+        $fServerTextbox.Text = ""
         $fServerTextbox.ForeColor = [Drawing.Color]::Black
     }
 })
 
 $fServerTextbox.Add_LostFocus({
     if ([string]::IsNullOrWhiteSpace($fServerTextbox.Text)) {
-        $fServerTextbo.Text = "FabTech Client Download URL"
+        $fServerTextbox.Text = "FabTech Client Download URL"
         $fServerTextbox.ForeColor = [Drawing.Color]::Gray
     }
 })
@@ -175,15 +175,15 @@ $fLicenseTextbox.Location = New-Object Drawing.Point(20, $y)
 $fLicenseTextbox.Text = "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)"
 $fLicenseTextbox.ForeColor = [Drawing.Color]::Gray
 
-$fLicenseTextboxx.Add_GotFocus({
-    if ($fLicenseTextboxx.Text -eq "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)") {
+$fLicenseTextbox.Add_GotFocus({
+    if ($fLicenseTextbox.Text -eq "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)") {
         $fLicenseTextbox.Text = ""
         $fLicenseTextbox.ForeColor = [Drawing.Color]::Black
     }
 })
 
 $fLicenseTextbox.Add_LostFocus({
-    if ([string]::IsNullOrWhiteSpace($fLicenseTextboxx.Text)) {
+    if ([string]::IsNullOrWhiteSpace($fLicenseTextbox.Text)) {
         $fLicenseTextbox.Text = "FabTech Client Download URL"
         $fLicenseTextbox.ForeColor = [Drawing.Color]::Gray
     }
