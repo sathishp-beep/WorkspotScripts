@@ -117,7 +117,22 @@ $y += 30
 $fClientTextbox = New-Object Windows.Forms.TextBox
 $fClientTextbox.Size = New-Object Drawing.Size(650, 25)
 $fClientTextbox.Location = New-Object Drawing.Point(20, $y)
-$fClientTextbox.PlaceholderText = "FabTech Client Download Link"
+$fClientTextbox.Text = "FabTech Client Download Link"
+$fClientTextbox.ForeColor = [Drawing.Color]::Gray
+
+$fClientTextbox.Add_GotFocus({
+    if ($fClientTextbox.Text -eq "FabTech Client Download Link") {
+        $fClientTextbox.Text = ""
+        $fClientTextbox.ForeColor = [Drawing.Color]::Black
+    }
+})
+
+$fClientTextbox.Add_LostFocus({
+    if ([string]::IsNullOrWhiteSpace($fClientTextbox.Text)) {
+        $fClientTextbox.Text = "FabTech Client Download Link"
+        $fClientTextbox.ForeColor = [Drawing.Color]::Gray
+    }
+})
 $form.Controls.Add($fClientTextbox)
 
 $y += 35
@@ -126,7 +141,22 @@ $y += 35
 $fServerTextbox = New-Object Windows.Forms.TextBox
 $fServerTextbox.Size = New-Object Drawing.Size(650, 25)
 $fServerTextbox.Location = New-Object Drawing.Point(20, $y)
-$fServerTextbox.PlaceholderText = "FabTech Server Download Link"
+$fServerTextbox.Text = "FabTech Server Download Link"
+$fServerTextbox.ForeColor = [Drawing.Color]::Gray
+
+$fServerTextbox.Add_GotFocus({
+    if ($fServerTextbox.Text -eq "FabTech Server Download Link") {
+        $fServerTextbox.Text = ""
+        $fServerTextbox.ForeColor = [Drawing.Color]::Black
+    }
+})
+
+$fServerTextbox.Add_LostFocus({
+    if ([string]::IsNullOrWhiteSpace($fServerTextbox.Text)) {
+        $fServerTextbox.Text = "FabTech Client Download URL"
+        $fServerTextbox.ForeColor = [Drawing.Color]::Gray
+    }
+})
 $form.Controls.Add($fServerTextbox)
 
 $y += 40
@@ -135,7 +165,22 @@ $y += 40
 $fLicenseTextbox = New-Object Windows.Forms.TextBox
 $fLicenseTextbox.Size = New-Object Drawing.Size(650, 25)
 $fLicenseTextbox.Location = New-Object Drawing.Point(20, $y)
-$fLicenseTextbox.PlaceholderText = "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)"
+$fLicenseTextbox.Text = "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)"
+$fLicenseTextbox.ForeColor = [Drawing.Color]::Gray
+
+$fLicenseTextbox.Add_GotFocus({
+    if ($fLicenseTextbox.Text -eq "FabTech License Server (e.g. licenseserver.company.com DNS/FQDN, Or IP)") {
+        $fLicenseTextbox.Text = ""
+        $fLicenseTextbox.ForeColor = [Drawing.Color]::Black
+    }
+})
+
+$fLicenseTextbox.Add_LostFocus({
+    if ([string]::IsNullOrWhiteSpace($fLicenseTextbox.Text)) {
+        $fLicenseTextbox.Text = "FabTech Client Download URL"
+        $fLicenseTextbox.ForeColor = [Drawing.Color]::Gray
+    }
+})
 $form.Controls.Add($fLicenseTextbox)
 
 $y += 45
