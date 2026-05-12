@@ -300,6 +300,23 @@ function Build-EventTimeline {
     }
 }
 
+function Get-TrustFailureEvidenceEvents {
+    param(
+        [int]$DaysBack = 7
+    )
+
+    $eventIDs = @(3210, 5722, 5805, 5719, 4742, 4625, 4768, 4769, 4771)
+    $logNames = @('System', 'Security')
+
+    foreach ($logName in $logNames) {
+        Get-WinEvent -FilterHashtable @{
+            LogName   = $logName
+            ID        = $eventIDs
+            StartTime = (Get-Date).AddDays(-$DaysBack)
+        } -ErrorAction SilentlyContinue
+    }
+}
+
 function Test-ADComputerObject {
     Write-GUILog '================================================='
     Write-GUILog 'AD COMPUTER OBJECT VALIDATION'
@@ -308,15 +325,167 @@ function Test-ADComputerObject {
     try {
         Import-Module ActiveDirectory -ErrorAction Stop
 
-        $computer = Get-ADComputer -Identity $env:COMPUTERNAME -Properties Created, LastLogonDate, PasswordLastSet, SID -ErrorAction Stop
+        $evidence = [System.Collections.Generic.List[string]]::new()
+        $domainName = Get-CurrentDomainName
+        $expectedSamAccountName = "$($env:COMPUTERNAME)`$"
+        $expectedShortHostSpn = "HOST/$($env:COMPUTERNAME)"
+
+        Write-GUILog "Local Computer Name: $env:COMPUTERNAME"
+        Write-GUILog "Joined Domain: $domainName"
+
+        if (-not $domainName) {
+            Write-GUILog 'This computer is not currently joined to a domain. AD object validation cannot continue.'
+            return
+        }
+
+        $domain = Get-ADDomain -ErrorAction Stop
+        $computer = Get-ADComputer -Identity $env:COMPUTERNAME -Properties Created, LastLogonDate, PasswordLastSet, SID, SamAccountName, DNSHostName, ServicePrincipalName, UserAccountControl, WhenChanged, LastLogonTimestamp -ErrorAction Stop
 
         Write-GUILog "Computer Name: $($computer.Name)"
+        Write-GUILog "sAMAccountName: $($computer.SamAccountName)"
         Write-GUILog "Enabled: $($computer.Enabled)"
+        Write-GUILog "DNSHostName: $($computer.DNSHostName)"
         Write-GUILog "Created: $($computer.Created)"
+        Write-GUILog "WhenChanged: $($computer.WhenChanged)"
         Write-GUILog "LastLogonDate: $($computer.LastLogonDate)"
         Write-GUILog "PasswordLastSet: $($computer.PasswordLastSet)"
         Write-GUILog "DistinguishedName: $($computer.DistinguishedName)"
-        Write-GUILog "SID: $($computer.SID)"
+        Write-GUILog "AD Computer Object SID: $($computer.SID)"
+        Write-GUILog "AD Domain SID: $($domain.DomainSID)"
+
+        Write-GUILog '-------------------------------------------------'
+        Write-GUILog 'SID / ACCOUNT CONSISTENCY CHECKS'
+        Write-GUILog '-------------------------------------------------'
+
+        if ($computer.SID.AccountDomainSid.Value -ne $domain.DomainSID.Value) {
+            $evidence.Add("AD computer object SID domain prefix [$($computer.SID.AccountDomainSid)] does not match AD domain SID [$($domain.DomainSID)].")
+        }
+        else {
+            Write-GUILog 'PASS: AD computer object SID belongs to the current AD domain SID.'
+        }
+
+        Write-GUILog 'Note: The local machine SID is a local SAM identifier and is not expected to match the AD computer object SID.'
+
+        if ($computer.SamAccountName -ne $expectedSamAccountName) {
+            $evidence.Add("sAMAccountName mismatch. Expected [$expectedSamAccountName], found [$($computer.SamAccountName)].")
+        }
+        else {
+            Write-GUILog 'PASS: AD sAMAccountName matches the local computer account name.'
+        }
+
+        if (-not $computer.Enabled) {
+            $evidence.Add('AD computer account is disabled.')
+        }
+        else {
+            Write-GUILog 'PASS: AD computer account is enabled.'
+        }
+
+        $isWorkstationTrust = ($computer.UserAccountControl -band 0x1000) -ne 0
+        $isServerTrust = ($computer.UserAccountControl -band 0x2000) -ne 0
+        if (-not ($isWorkstationTrust -or $isServerTrust)) {
+            $evidence.Add("UserAccountControl does not show a workstation/server trust account flag. Value: $($computer.UserAccountControl).")
+        }
+        else {
+            Write-GUILog "PASS: AD account trust flag is present. UserAccountControl: $($computer.UserAccountControl)."
+        }
+
+        $expectedSpns = @($expectedShortHostSpn)
+        if ($computer.DNSHostName) {
+            $expectedSpns += "HOST/$($computer.DNSHostName)"
+        }
+
+        $missingSpns = $expectedSpns | Where-Object { $computer.ServicePrincipalName -notcontains $_ }
+        if ($missingSpns) {
+            $evidence.Add("Missing expected HOST SPN(s): $($missingSpns -join ', ').")
+        }
+        else {
+            Write-GUILog 'PASS: Expected HOST SPNs are present.'
+        }
+
+        Write-GUILog '-------------------------------------------------'
+        Write-GUILog 'SECURE CHANNEL / PASSWORD AGE CHECKS'
+        Write-GUILog '-------------------------------------------------'
+
+        try {
+            $secureChannel = Test-ComputerSecureChannel -ErrorAction Stop
+            Write-GUILog "Secure Channel Status: $secureChannel"
+
+            if (-not $secureChannel) {
+                $evidence.Add('Test-ComputerSecureChannel returned False.')
+            }
+        }
+        catch {
+            $evidence.Add("Test-ComputerSecureChannel failed: $($_.Exception.Message)")
+        }
+
+        if ($computer.PasswordLastSet) {
+            $passwordAgeDays = [math]::Round(((Get-Date) - $computer.PasswordLastSet).TotalDays, 1)
+            Write-GUILog "Machine Account Password Age: $passwordAgeDays days"
+
+            if ($passwordAgeDays -gt 45) {
+                $evidence.Add("Machine account password is older than 45 days ($passwordAgeDays days). This can indicate password rotation or replication problems.")
+            }
+        }
+
+        Write-GUILog '-------------------------------------------------'
+        Write-GUILog 'DUPLICATE / CONFLICTING COMPUTER OBJECT CHECKS'
+        Write-GUILog '-------------------------------------------------'
+
+        $duplicateFilters = @(
+            "sAMAccountName -eq '$expectedSamAccountName'",
+            "dNSHostName -eq '$($computer.DNSHostName)'"
+        ) | Where-Object { $_ -notmatch "''" }
+
+        foreach ($filter in $duplicateFilters) {
+            $matches = Get-ADComputer -Filter $filter -Properties DNSHostName, SamAccountName, DistinguishedName, SID -ErrorAction SilentlyContinue
+            if (($matches | Measure-Object).Count -gt 1) {
+                $evidence.Add("Multiple AD computer objects matched [$filter]. This can cause ambiguous trust repair and authentication failures.")
+                foreach ($match in $matches) {
+                    Write-GUILog "Duplicate candidate: $($match.Name) | $($match.DNSHostName) | $($match.SID) | $($match.DistinguishedName)"
+                }
+            }
+            else {
+                Write-GUILog "PASS: No duplicate AD computer objects found for [$filter]."
+            }
+        }
+
+        Write-GUILog '-------------------------------------------------'
+        Write-GUILog 'RECENT TRUST FAILURE EVENT EVIDENCE'
+        Write-GUILog '-------------------------------------------------'
+
+        $events = @(Get-TrustFailureEvidenceEvents -DaysBack 7 |
+            Sort-Object TimeCreated -Descending |
+            Select-Object -First 20)
+
+        if ($events) {
+            $evidence.Add("Found $($events.Count) recent Netlogon/Kerberos/Security event(s) commonly associated with trust relationship failures.")
+            foreach ($event in $events) {
+                $message = $event.Message -replace "(`r`n|`r|`n)+", ' '
+                if ($message.Length -gt 220) {
+                    $message = $message.Substring(0, 220)
+                }
+
+                Write-GUILog "Event: $($event.TimeCreated) | $($event.LogName) | $($event.Id) | $($event.ProviderName)"
+                Write-GUILog "Message: $message"
+            }
+        }
+        else {
+            Write-GUILog 'No recent trust-related event evidence found in the last 7 days.'
+        }
+
+        Write-GUILog '-------------------------------------------------'
+        Write-GUILog 'AD OBJECT TRUST RISK SUMMARY'
+        Write-GUILog '-------------------------------------------------'
+
+        if ($evidence.Count -eq 0) {
+            Write-GUILog 'No SID/account mismatch or trust-failure evidence was found by these checks.'
+        }
+        else {
+            Write-GUILog "Evidence Count: $($evidence.Count)"
+            foreach ($item in $evidence) {
+                Write-GUILog "EVIDENCE: $item"
+            }
+        }
     }
     catch {
         Write-GUILog 'AD validation failed.'
