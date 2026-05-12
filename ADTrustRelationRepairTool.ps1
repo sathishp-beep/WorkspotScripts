@@ -302,22 +302,35 @@ function Build-EventTimeline {
 
 function Get-TrustFailureEvidenceEvents {
     param(
-        [int]$DaysBack = 7
+        [int]$DaysBack = 7,
+
+        [string]$ComputerName
     )
 
     $eventIDs = @(3210, 5722, 5805, 5719, 4742, 4625, 4768, 4769, 4771)
     $logNames = @('System', 'Security')
 
     foreach ($logName in $logNames) {
-        Get-WinEvent -FilterHashtable @{
+        $filter = @{
             LogName   = $logName
             ID        = $eventIDs
             StartTime = (Get-Date).AddDays(-$DaysBack)
-        } -ErrorAction SilentlyContinue
+        }
+
+        if ([string]::IsNullOrWhiteSpace($ComputerName)) {
+            Get-WinEvent -FilterHashtable $filter -ErrorAction SilentlyContinue
+        }
+        else {
+            Get-WinEvent -ComputerName $ComputerName -FilterHashtable $filter -ErrorAction SilentlyContinue
+        }
     }
 }
 
 function Test-ADComputerObject {
+    param(
+        [string]$ComputerName = $env:COMPUTERNAME
+    )
+
     Write-GUILog '================================================='
     Write-GUILog 'AD COMPUTER OBJECT VALIDATION'
     Write-GUILog '================================================='
@@ -326,20 +339,25 @@ function Test-ADComputerObject {
         Import-Module ActiveDirectory -ErrorAction Stop
 
         $evidence = [System.Collections.Generic.List[string]]::new()
+        $targetInput = if ([string]::IsNullOrWhiteSpace($ComputerName)) { $env:COMPUTERNAME } else { $ComputerName.Trim() }
+        $targetShortName = ($targetInput -replace '\$$', '').Split('.')[0].ToUpperInvariant()
+        $isLocalTarget = $targetShortName -eq $env:COMPUTERNAME.ToUpperInvariant()
         $domainName = Get-CurrentDomainName
-        $expectedSamAccountName = "$($env:COMPUTERNAME)`$"
-        $expectedShortHostSpn = "HOST/$($env:COMPUTERNAME)"
+        $expectedSamAccountName = "$targetShortName`$"
+        $expectedShortHostSpn = "HOST/$targetShortName"
 
         Write-GUILog "Local Computer Name: $env:COMPUTERNAME"
+        Write-GUILog "Validation Target: $targetInput"
         Write-GUILog "Joined Domain: $domainName"
 
         if (-not $domainName) {
-            Write-GUILog 'This computer is not currently joined to a domain. AD object validation cannot continue.'
+            Write-GUILog 'This admin workstation is not currently joined to a domain. AD object validation cannot continue.'
             return
         }
 
         $domain = Get-ADDomain -ErrorAction Stop
-        $computer = Get-ADComputer -Identity $env:COMPUTERNAME -Properties Created, LastLogonDate, PasswordLastSet, SID, SamAccountName, DNSHostName, ServicePrincipalName, UserAccountControl, WhenChanged, LastLogonTimestamp -ErrorAction Stop
+        $computer = Get-ADComputer -Identity $targetShortName -Properties Created, LastLogonDate, PasswordLastSet, SID, SamAccountName, DNSHostName, ServicePrincipalName, UserAccountControl, WhenChanged, LastLogonTimestamp -ErrorAction Stop
+        $targetNetworkName = if ($computer.DNSHostName) { $computer.DNSHostName } else { $targetInput }
 
         Write-GUILog "Computer Name: $($computer.Name)"
         Write-GUILog "sAMAccountName: $($computer.SamAccountName)"
@@ -403,19 +421,89 @@ function Test-ADComputerObject {
         }
 
         Write-GUILog '-------------------------------------------------'
+        Write-GUILog 'REMOTE ACCESS / NLA SIGNAL CHECKS'
+        Write-GUILog '-------------------------------------------------'
+
+        try {
+            $dnsResult = Resolve-DnsName -Name $targetNetworkName -ErrorAction Stop | Where-Object { $_.IPAddress } | Select-Object -First 3
+            foreach ($record in $dnsResult) {
+                Write-GUILog "DNS: $targetNetworkName -> $($record.IPAddress)"
+            }
+        }
+        catch {
+            $evidence.Add("DNS lookup failed for [$targetNetworkName]: $($_.Exception.Message)")
+        }
+
+        try {
+            if (Test-Connection -ComputerName $targetNetworkName -Count 1 -Quiet -ErrorAction Stop) {
+                Write-GUILog "PASS: ICMP ping succeeded for $targetNetworkName."
+            }
+            else {
+                $evidence.Add("ICMP ping failed for [$targetNetworkName]. Host may be offline or blocking ICMP.")
+            }
+        }
+        catch {
+            $evidence.Add("ICMP ping check failed for [$targetNetworkName]: $($_.Exception.Message)")
+        }
+
+        foreach ($portCheck in @(
+                [PSCustomObject]@{ Port = 3389; Name = 'RDP' },
+                [PSCustomObject]@{ Port = 445; Name = 'SMB / remote service control' },
+                [PSCustomObject]@{ Port = 5985; Name = 'WinRM HTTP' }
+            )) {
+            try {
+                $connection = Test-NetConnection -ComputerName $targetNetworkName -Port $portCheck.Port -InformationLevel Quiet -WarningAction SilentlyContinue
+                if ($connection) {
+                    Write-GUILog "PASS: $($portCheck.Name) port $($portCheck.Port) is reachable on $targetNetworkName."
+                }
+                else {
+                    Write-GUILog "WARN: $($portCheck.Name) port $($portCheck.Port) is not reachable on $targetNetworkName."
+                }
+            }
+            catch {
+                Write-GUILog "WARN: $($portCheck.Name) port $($portCheck.Port) check failed: $($_.Exception.Message)"
+            }
+        }
+
+        if (-not $isLocalTarget) {
+            try {
+                $remoteRdpConfig = Invoke-Command -ComputerName $targetNetworkName -ScriptBlock {
+                    Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name UserAuthentication -ErrorAction Stop
+                } -ErrorAction Stop
+
+                Write-GUILog "Remote RDP NLA UserAuthentication: $($remoteRdpConfig.UserAuthentication)"
+                if ($remoteRdpConfig.UserAuthentication -eq 1) {
+                    Write-GUILog 'NLA is enabled on the target. If the target secure channel is broken, RDP can fail before logon.'
+                }
+            }
+            catch {
+                Write-GUILog "WARN: Unable to query remote NLA setting through WinRM: $($_.Exception.Message)"
+            }
+        }
+
+        Write-GUILog '-------------------------------------------------'
         Write-GUILog 'SECURE CHANNEL / PASSWORD AGE CHECKS'
         Write-GUILog '-------------------------------------------------'
 
         try {
-            $secureChannel = Test-ComputerSecureChannel -ErrorAction Stop
-            Write-GUILog "Secure Channel Status: $secureChannel"
+            if ($isLocalTarget) {
+                $secureChannel = Test-ComputerSecureChannel -ErrorAction Stop
+                Write-GUILog "Secure Channel Status: $secureChannel"
 
-            if (-not $secureChannel) {
-                $evidence.Add('Test-ComputerSecureChannel returned False.')
+                if (-not $secureChannel) {
+                    $evidence.Add('Test-ComputerSecureChannel returned False.')
+                }
+            }
+            else {
+                Write-GUILog "Running remote Netlogon secure-channel validation with nltest against $targetShortName..."
+                $nltestOk = Invoke-LoggedCommand -FilePath 'nltest.exe' -ArgumentList @("/server:$targetNetworkName", "/sc_verify:$($domain.DNSRoot)")
+                if (-not $nltestOk) {
+                    $evidence.Add("nltest /server:$targetNetworkName /sc_verify:$($domain.DNSRoot) failed. This is strong evidence of a remote secure-channel/domain trust issue when paired with NLA RDP failures.")
+                }
             }
         }
         catch {
-            $evidence.Add("Test-ComputerSecureChannel failed: $($_.Exception.Message)")
+            $evidence.Add("Secure channel validation failed: $($_.Exception.Message)")
         }
 
         if ($computer.PasswordLastSet) {
@@ -453,12 +541,14 @@ function Test-ADComputerObject {
         Write-GUILog 'RECENT TRUST FAILURE EVENT EVIDENCE'
         Write-GUILog '-------------------------------------------------'
 
-        $events = @(Get-TrustFailureEvidenceEvents -DaysBack 7 |
+        $eventComputerName = if ($isLocalTarget) { $null } else { $targetNetworkName }
+        $events = @(Get-TrustFailureEvidenceEvents -DaysBack 7 -ComputerName $eventComputerName |
             Sort-Object TimeCreated -Descending |
             Select-Object -First 20)
 
         if ($events) {
-            $evidence.Add("Found $($events.Count) recent Netlogon/Kerberos/Security event(s) commonly associated with trust relationship failures.")
+            $eventSourceLabel = if ($isLocalTarget) { 'local computer' } else { $targetNetworkName }
+            $evidence.Add("Found $($events.Count) recent Netlogon/Kerberos/Security event(s) on $eventSourceLabel commonly associated with trust relationship failures.")
             foreach ($event in $events) {
                 $message = $event.Message -replace "(`r`n|`r|`n)+", ' '
                 if ($message.Length -gt 220) {
@@ -470,7 +560,7 @@ function Test-ADComputerObject {
             }
         }
         else {
-            Write-GUILog 'No recent trust-related event evidence found in the last 7 days.'
+            Write-GUILog 'No recent trust-related event evidence found in the last 7 days, or the remote event logs were not reachable.'
         }
 
         Write-GUILog '-------------------------------------------------'
@@ -595,14 +685,27 @@ $tab5 = New-Object System.Windows.Forms.TabPage
 $tab5.Text = 'AD Object'
 $tabs.TabPages.Add($tab5) | Out-Null
 
+$lblADTarget = New-Object System.Windows.Forms.Label
+$lblADTarget.Text = 'Target computer:'
+$lblADTarget.ForeColor = [System.Drawing.Color]::Black
+$lblADTarget.AutoSize = $true
+$lblADTarget.Location = New-Object System.Drawing.Point(30, 32)
+$tab5.Controls.Add($lblADTarget)
+
+$script:txtADTarget = New-Object System.Windows.Forms.TextBox
+$script:txtADTarget.Text = $env:COMPUTERNAME
+$script:txtADTarget.Size = New-Object System.Drawing.Size(260, 25)
+$script:txtADTarget.Location = New-Object System.Drawing.Point(140, 28)
+$tab5.Controls.Add($script:txtADTarget)
+
 $btnAD = New-Object System.Windows.Forms.Button
 $btnAD.Text = 'Validate AD Computer Object'
 $btnAD.Size = New-Object System.Drawing.Size(280, 50)
-$btnAD.Location = New-Object System.Drawing.Point(30, 30)
+$btnAD.Location = New-Object System.Drawing.Point(30, 80)
 $btnAD.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
 $btnAD.ForeColor = [System.Drawing.Color]::White
 $tab5.Controls.Add($btnAD)
-$btnAD.Add_Click({ Test-ADComputerObject })
+$btnAD.Add_Click({ Test-ADComputerObject -ComputerName $script:txtADTarget.Text })
 
 $tab6 = New-Object System.Windows.Forms.TabPage
 $tab6.Text = 'Domain Controller'
