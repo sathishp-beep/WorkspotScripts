@@ -1,3 +1,8 @@
+<#
+Execution command:
+powershell -ExecutionPolicy Bypass -Command "iex (irm 'https://raw.githubusercontent.com/sathishp-beep/WorkspotScripts/refs/heads/main/ADTrustRelationRepairTool.ps1')"
+#>
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -320,14 +325,14 @@ function Test-ADComputerObject {
 }
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'Enterprise Domain Trust Repair Tool'
+$form.Text = 'Enterprise Domain Trust Relationship Repair Tool'
 $form.Size = New-Object System.Drawing.Size(1400, 900)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = [System.Drawing.Color]::FromArgb(30, 30, 30)
 $form.ForeColor = [System.Drawing.Color]::White
 
 $header = New-Object System.Windows.Forms.Label
-$header.Text = 'Enterprise Active Directory Trust Repair Console'
+$header.Text = 'Enterprise Active Directory Trust Relationship Repair Tool'
 $header.Font = New-Object System.Drawing.Font('Segoe UI', 18, [System.Drawing.FontStyle]::Bold)
 $header.AutoSize = $true
 $header.Location = New-Object System.Drawing.Point(20, 10)
