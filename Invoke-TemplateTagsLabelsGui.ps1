@@ -18,11 +18,9 @@ Set-StrictMode -Version Latest
 
 if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') {
     $powerShellExe = (Get-Command powershell.exe -ErrorAction SilentlyContinue).Source
-    if ($powerShellExe) {
+    if ($powerShellExe -and $PSCommandPath) {   # ← add: -and $PSCommandPath
         Start-Process -FilePath $powerShellExe -ArgumentList @(
-            '-NoProfile',
-            '-ExecutionPolicy', 'Bypass',
-            '-STA',
+            '-NoProfile', '-ExecutionPolicy', 'Bypass', '-STA',
             '-File', "`"$PSCommandPath`""
         ) -WindowStyle Normal
         return
@@ -478,7 +476,9 @@ function Invoke-WsApplyTagsLabels {
 }
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "Gcloud Tags and Labels (Modified: $((Get-Item -LiteralPath $PSCommandPath).LastWriteTime))"
+$modifiedTime = if ($PSCommandPath) { (Get-Item -LiteralPath $PSCommandPath).LastWriteTime } else { 'iex' }
+$form.Text = "Gcloud Tags and Labels (Modified: $modifiedTime)"
+#$form.Text = "Gcloud Tags and Labels (Modified: $((Get-Item -LiteralPath $PSCommandPath).LastWriteTime))"
 $form.Size = New-Object System.Drawing.Size(1180, 820)
 $form.MinimumSize = New-Object System.Drawing.Size(980, 720)
 $form.StartPosition = 'CenterScreen'
