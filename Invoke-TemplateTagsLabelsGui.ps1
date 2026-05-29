@@ -8,13 +8,13 @@
 
 .NOTES
     Run from Windows PowerShell with STA enabled if your host requires it:
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File ".\Invoke-WsTemplateOperationsGui.ps1"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -STAh -File ".\Invoke-WsTemplateOperationsGui.ps1"
 #>
 
 [CmdletBinding()]
 param()
 
-Set-StrictMode -Version Latest
+Set-StrictMode -Version Latesth
 
 if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') {
     $powerShellExe = (Get-Command powershell.exe -ErrorAction SilentlyContinue).Source
@@ -538,12 +538,12 @@ $gcloudGroup.Controls.Add($script:GcloudMaintenanceTextBox)
 
 $gcloudGroup.Controls.Add((New-WsLabel -Text 'Region (zone)' -X 12 -Y 206))
 $script:GcloudRegionTextBox = New-WsTextBox -X 150 -Y 204 -Width 360 -Text ''
-$script:GcloudRegionTextBox.PlaceholderText = 'e.g. us-east4-a  (1st --region, before --network-interface)'
+
 $gcloudGroup.Controls.Add($script:GcloudRegionTextBox)
 
 $gcloudGroup.Controls.Add((New-WsLabel -Text 'Region' -X 12 -Y 236))
 $script:GcloudZoneTextBox = New-WsTextBox -X 150 -Y 234 -Width 360 -Text ''
-$script:GcloudZoneTextBox.PlaceholderText = 'e.g. us-east4  (2nd --region, after --maintenance-policy)'
+
 $gcloudGroup.Controls.Add($script:GcloudZoneTextBox)
 
 $script:GcloudNoAddressCheckBox = New-Object System.Windows.Forms.CheckBox
