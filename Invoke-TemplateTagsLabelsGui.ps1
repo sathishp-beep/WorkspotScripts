@@ -14,7 +14,7 @@
 [CmdletBinding()]
 param()
 
-Set-StrictMode -Version Latesth
+Set-StrictMode -Version Latest
 
 if ([Threading.Thread]::CurrentThread.ApartmentState -ne 'STA') {
     $powerShellExe = (Get-Command powershell.exe -ErrorAction SilentlyContinue).Source
